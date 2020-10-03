@@ -19,10 +19,8 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 
 # In[76]:
 
-
-#df_police2018_2019= pd.read_csv("/Users/marietoudione/Documents/DATA MINING1/FINAL PROJECT/DATA/Police_Department_Incident_Reports__2018_2019-L.csv")
-df_police2018 = pd.read_csv("/Users/marietoudione/Documents/DATA MINING1/FINAL PROJECT/DATA/2018_Police_Report.csv")
-df_police2019 = pd.read_csv("/Users/marietoudione/Documents/DATA MINING1/FINAL PROJECT/DATA/2019_Police_Report.csv")
+df_police2018 = pd.read_csv("../FINAL PROJECT/DATA/2018_Police_Report.csv")
+df_police2019 = pd.read_csv("../FINAL PROJECT/DATA/2019_Police_Report.csv")
 
 
 # In[77]:
@@ -185,20 +183,13 @@ sf_map.plot(column='Crimes', cmap='Oranges', figsize=(20,10))
 crime_time18_perday= crime_time18_perday[['Crimes', 'Hour', 'Incident Day of Week', 'zip']]
 
 
-# In[100]:
-
 
 dummy_18 = pd.get_dummies(crime_time18_perday)
 
 
-# In[101]:
-
 
 X_18 = dummy_18.iloc[:, 1:]
 Y_18 = dummy_18.iloc[:, 0]
-
-
-# In[102]:
 
 
 #Random Forest
@@ -206,13 +197,7 @@ rnd_clf = RandomForestRegressor(n_estimators=500, max_leaf_nodes=16, n_jobs=-1, 
 rnd_clf.fit(X_18, Y_18)
 
 
-# In[103]:
-
-
 rnd_clf.oob_score_
-
-
-# In[104]:
 
 
 #2019
@@ -220,7 +205,6 @@ rnd_clf.oob_score_
 df_police2019['geometry']=df_police2019.apply(lambda row: Point(row['Longitude'], row['Latitude']), axis=1)
 
 
-# In[105]:
 
 
 
@@ -228,46 +212,30 @@ geo_police2019 = gpd.GeoDataFrame(df_police2019, geometry='geometry')
 geo_police2019.crs= {'init':'epsg:4326'}
 
 
-# In[106]:
 
 
 df_police2019 = gpd.tools.sjoin(geo_police2019, san_fran, how='left', op = 'within')
 
 
-# In[107]:
-
-
 df_police2019.head()
-
-
-# In[108]:
 
 
 crime_time19 = df_police2019[['Incident Date','Incident Time','Incident Day of Week', 'geometry','zip']]
 
 
-# In[109]:
-
-
-#crime_time19.loc[:, 'Date']= pd.to_datetime(crime_time19['Incident Date'])
 
 crime_time19.loc[:, 'Hour']= pd.to_datetime(crime_time19['Incident Time'])
 crime_time19.loc[:, 'Hour']= crime_time19.Hour.apply(lambda x: x.hour)
 
 
-# In[110]:
 
 
 crime_time19.head()
 
 
-# In[111]:
-
 
 crime_time19_perday= crime_time19[['Incident Day of Week', 'zip', 'Hour']]
 
-
-# In[112]:
 
 
 #Create new variable crime
@@ -275,19 +243,11 @@ crime_time19_perday= crime_time19[['Incident Day of Week', 'zip', 'Hour']]
 crime_time19_perday['Crimes']=1
 
 
-# In[113]:
-
-
 crime_time19_perday = crime_time19_perday.groupby(['Incident Day of Week', 'zip', 'Hour']).sum().reset_index()
 
 
-# In[114]:
-
 
 crime_time19_perday.sort_values('Crimes', ascending = False).head(10)
-
-
-# In[115]:
 
 
 #Dummy variables
@@ -295,20 +255,11 @@ crime_time19_perday.sort_values('Crimes', ascending = False).head(10)
 crime_time19_perday= crime_time19_perday[['Crimes', 'Hour', 'Incident Day of Week', 'zip']]
 
 
-# In[116]:
-
-
 dummy_19 = pd.get_dummies(crime_time19_perday)
-
-
-# In[117]:
 
 
 X_19 = dummy_19.iloc[:, 1:]
 Y_19 = dummy_19.iloc[:, 0]
-
-
-# In[118]:
 
 
 #Gradient Boosting
@@ -316,34 +267,17 @@ Y_19 = dummy_19.iloc[:, 0]
 gbrt= GradientBoostingRegressor(max_depth=3, n_estimators=200, learning_rate=1.0)
 gbrt.fit(X_18, Y_18)
 
-
-# In[119]:
-
-
 gbrt.score(X_19, Y_19)
-
-
-# In[120]:
 
 
 gbrt_pred= gbrt.predict(X_19)
 
-
-# gbrt_pred= gbrt.predict(X_19)
-
-# In[121]:
-
-
 crime_time19_perday['Pred_GBRT'] = pd.Series(gbrt_pred)
 
-
-# In[122]:
 
 
 crime_time19_perday.head()
 
-
-# In[123]:
 
 
 crime_time19_perday['Crimes']=crime_time19_perday['Crimes']/365
@@ -351,31 +285,16 @@ crime_time19_perday['Crimes']=crime_time19_perday['Crimes']/365
 crime_time19_perday['Pred_GBRT']=crime_time19_perday['Pred_GBRT']/365
 
 
-# In[124]:
-
 
 crime_time19_perday=np.round(crime_time19_perday, 2)
-
-
-# In[125]:
 
 
 crime_time19_perday.head()
 
 
-# In[126]:
 
+crime_time19_perday.to_json('../crimes_pred2019.json', orient='records', double_precision=2)
 
-crime_time19_perday.to_json('/Users/marietoudione/Documents/DATA MINING1/FINAL PROJECT/DATA/crimes_pred2019.json', orient='records', double_precision=2)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
 
 
 
